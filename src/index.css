@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 43 33% 98%;
+    --foreground: 150 40% 10%;
+
+    --card: 43 33% 98%;
+    --card-foreground: 150 40% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 40% 10%;
+
+    --primary: 114 37% 25%;
+    --primary-foreground: 43 33% 98%;
+
+    --secondary: 39 45% 92%;
+    --secondary-foreground: 150 40% 10%;
+
+    --muted: 40 20% 94%;
+    --muted-foreground: 150 10% 45%;
+
+    --accent: 39 50% 55%;
+    --accent-foreground: 43 33% 98%;
+
+    --destructive: 349 65% 40%;
+    --destructive-foreground: 43 33% 98%;
+
+    --berry: 349 65% 40%;
+    --berry-foreground: 0 0% 100%;
+
+    --gold: 39 50% 55%;
+    --gold-foreground: 0 0% 100%;
+
+    --cream: 43 33% 98%;
+    --forest: 114 37% 25%;
+
+    --border: 40 20% 90%;
+    --input: 40 20% 90%;
+    --ring: 114 37% 25%;
+
+    --radius: 1rem;
+
+    --shadow-card: 0 0 0 1px rgba(45,90,39,0.03), 0 2px 4px rgba(0,0,0,0.02), 0 12px 24px -4px rgba(0,0,0,0.04);
+    --shadow-card-hover: 0 20px 40px -12px rgba(0,0,0,0.08);
+    --shadow-elevated: 0 25px 50px -12px rgba(0,0,0,0.1);
+
+    --ease-premium: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  .card-premium {
+    background: hsl(var(--card));
+    border-radius: 20px;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.3s var(--ease-premium), box-shadow 0.3s ease;
+  }
+  .card-premium:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  .btn-press:active {
+    transform: scale(0.97);
+  }
+
+  .glass {
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-dark {
+    background: rgba(45,90,39,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .badge-pill {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+    backdrop-filter: blur(8px);
+  }
+
+  .container-premium {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-spacing {
+    @apply py-16 md:py-24;
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(var(--gold)), hsl(39 60% 65%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hover-lift {
+    @apply transition-transform duration-300;
+    transition-timing-function: var(--ease-premium);
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+
+  .image-zoom {
+    @apply overflow-hidden;
+  }
+  .image-zoom img {
+    @apply transition-transform duration-500;
+    transition-timing-function: var(--ease-premium);
+  }
+  .image-zoom:hover img {
+    transform: scale(1.05);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+}
