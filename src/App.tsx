@@ -18,11 +18,11 @@ import Account from "./pages/Account";
 import Admin from "./pages/Admin";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Offers from "./pages/Offers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Wrap routes with NotificationProvider that gets customer email
 function AppRoutes() {
   const { customer } = useAuth();
   return (
@@ -40,6 +40,7 @@ function AppRoutes() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/offers" element={<Offers />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </NotificationProvider>

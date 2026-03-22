@@ -1,9 +1,23 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Tag } from "lucide-react";
 import heroImg from "@/assets/hero-giftbox.jpg";
+import { getStore, seedDefaults, KEYS, type Offer } from "@/lib/jsonStore";
 
 const HeroSection = () => {
+  const [offers, setOffers] = useState<Offer[]>([]);
+
+  useEffect(() => {
+    seedDefaults();
+    const now = new Date();
+    const active = getStore<Offer[]>(KEYS.OFFERS, [])
+      .filter(o => o.is_active && (!o.expires_at || new Date(o.expires_at) > now))
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .slice(0, 3);
+    setOffers(active);
+  }, []);
+
   return (
     <section className="relative overflow-hidden bg-background">
       <div className="container-premium">
@@ -30,10 +44,12 @@ const HeroSection = () => {
                 for Them
               </h1>
             </div>
+
             <p className="font-body text-base md:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0 leading-relaxed">
-              Hand-picked premium fruits, luxury dates, and artisan nut collections. 
+              Hand-picked premium fruits, luxury dates, and artisan nut collections.
               Beautifully gift-wrapped and delivered fresh across the UAE.
             </p>
+
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
               <Link
                 to="/shop"
@@ -50,8 +66,38 @@ const HeroSection = () => {
               </Link>
             </div>
 
+            {/* Offers strip — shown when offers exist */}
+            {offers.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="flex items-center gap-3 flex-wrap justify-center lg:justify-start pt-2"
+              >
+                <Tag size={14} className="text-gold flex-shrink-0" />
+                {offers.map((offer, i) => (
+                  <Link
+                    key={offer.id}
+                    to={offer.link || "/offers"}
+                    className="group flex items-center gap-2"
+                  >
+                    <span
+                      className="font-body text-xs font-semibold px-3 py-1.5 rounded-full transition-all group-hover:brightness-90"
+                      style={{ backgroundColor: offer.bg_color + "20", color: offer.bg_color }}
+                    >
+                      {offer.discount_text || offer.title}
+                    </span>
+                    {i < offers.length - 1 && <span className="text-muted-foreground/30">·</span>}
+                  </Link>
+                ))}
+                <Link to="/offers" className="font-body text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                  All offers <ArrowRight size={11} />
+                </Link>
+              </motion.div>
+            )}
+
             {/* Trust */}
-            <div className="flex items-center gap-6 justify-center lg:justify-start pt-4">
+            <div className="flex items-center gap-6 justify-center lg:justify-start pt-2">
               <div className="text-center">
                 <p className="font-display text-2xl font-semibold text-foreground">10K+</p>
                 <p className="font-body text-xs text-muted-foreground">Happy Customers</p>
@@ -84,6 +130,7 @@ const HeroSection = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/20 to-transparent" />
             </div>
+
             {/* Floating badge */}
             <motion.div
               animate={{ y: [0, -10, 0] }}
@@ -93,6 +140,19 @@ const HeroSection = () => {
               <p className="font-body text-xs text-muted-foreground">Free Delivery</p>
               <p className="font-display text-lg font-semibold">Across UAE 🇦🇪</p>
             </motion.div>
+
+            {/* Offers floating badge — when offers exist */}
+            {offers.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.8 }}
+                className="absolute -top-4 right-4 md:right-8 glass rounded-2xl px-4 py-3 shadow-lg border border-gold/20"
+              >
+                <p className="font-body text-xs text-muted-foreground">Current Offer</p>
+                <p className="font-display text-sm font-semibold text-primary">{offers[0]?.discount_text || offers[0]?.title}</p>
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, LayoutDashboard, ShoppingBag, Users, BarChart3, Package, Settings, FileText, Box, LogOut, Menu, ExternalLink, MessageSquare, FolderOpen, Bell } from "lucide-react";
+import { Eye, EyeOff, Lock, LayoutDashboard, ShoppingBag, Users, BarChart3, Package, Settings, FileText, Box, LogOut, Menu, ExternalLink, MessageSquare, FolderOpen, Bell, Tag, Truck } from "lucide-react";
 import Dashboard from "@/admin/Dashboard";
 import Products from "@/admin/Products";
 import Orders from "@/admin/Orders";
@@ -11,21 +11,25 @@ import Categories from "@/admin/Categories";
 import Messages from "@/admin/Messages";
 import Content from "@/admin/Content";
 import SettingsPage from "@/admin/Settings";
-import { supabaseAdmin } from "@/lib/supabase";
+import Offers from "@/admin/Offers";
+import Delivery from "@/admin/Delivery";
+import { getStore, KEYS, type BoxMessage } from "@/lib/jsonStore";
 
 const ADMIN_SESSION = "fruitflix_admin_v2";
 
 const NAV = [
-  { id: "dashboard",   label: "Dashboard",   icon: LayoutDashboard },
-  { id: "products",    label: "Products",    icon: Package },
-  { id: "categories",  label: "Categories",  icon: FolderOpen },
-  { id: "orders",      label: "Orders",      icon: ShoppingBag },
-  { id: "customers",   label: "Customers",   icon: Users },
-  { id: "analytics",   label: "Analytics",   icon: BarChart3 },
-  { id: "box-builder", label: "Box Builder", icon: Box },
-  { id: "messages",    label: "Messages",    icon: MessageSquare },
-  { id: "content",     label: "Content",     icon: FileText },
-  { id: "settings",    label: "Settings",    icon: Settings },
+  { id: "dashboard",   label: "Dashboard",     icon: LayoutDashboard },
+  { id: "products",    label: "Products",       icon: Package },
+  { id: "categories",  label: "Categories",     icon: FolderOpen },
+  { id: "offers",      label: "Offers",         icon: Tag },
+  { id: "orders",      label: "Orders",         icon: ShoppingBag },
+  { id: "customers",   label: "Customers",      icon: Users },
+  { id: "analytics",   label: "Analytics",      icon: BarChart3 },
+  { id: "box-builder", label: "Box Builder",    icon: Box },
+  { id: "delivery",    label: "Delivery",       icon: Truck },
+  { id: "messages",    label: "Messages",       icon: MessageSquare },
+  { id: "content",     label: "Content",        icon: FileText },
+  { id: "settings",    label: "Settings",       icon: Settings },
 ];
 
 export default function Admin() {
@@ -44,18 +48,18 @@ export default function Admin() {
   useEffect(() => {
     if (!authed) return;
     loadUnread();
-    const interval = setInterval(loadUnread, 30000);
+    const interval = setInterval(loadUnread, 10000);
     return () => clearInterval(interval);
   }, [authed]);
 
-  async function loadUnread() {
-    const { data } = await supabaseAdmin.from("conversations").select("unread_admin").gt("unread_admin", 0);
-    setUnreadMessages(data?.reduce((s: number, c: any) => s + (c.unread_admin || 0), 0) || 0);
+  function loadUnread() {
+    const msgs = getStore<BoxMessage[]>(KEYS.BOX_MESSAGES, []);
+    setUnreadMessages(msgs.filter(m => !m.read).length);
   }
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    const adminPw = import.meta.env.VITE_ADMIN_PASSWORD || "FruitFlix2024!";
+    const adminPw = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_ADMIN_PASSWORD) || "FruitFlix2024!";
     if (pw === adminPw) { sessionStorage.setItem(ADMIN_SESSION, "true"); setAuthed(true); }
     else alert("Incorrect password");
   }
@@ -67,10 +71,12 @@ export default function Admin() {
       case "dashboard":   return <Dashboard />;
       case "products":    return <Products />;
       case "categories":  return <Categories />;
+      case "offers":      return <Offers />;
       case "orders":      return <Orders />;
       case "customers":   return <Customers />;
       case "analytics":   return <Analytics />;
       case "box-builder": return <BoxBuilder />;
+      case "delivery":    return <Delivery />;
       case "messages":    return <Messages />;
       case "content":     return <Content />;
       case "settings":    return <SettingsPage />;
@@ -90,10 +96,16 @@ export default function Admin() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input type={showPw ? "text" : "password"} value={pw} onChange={e => setPw(e.target.value)} placeholder="Admin password" required className="w-full pl-10 pr-10 h-12 rounded-xl border border-border bg-background/60 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
-              <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">{showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+              <input type={showPw ? "text" : "password"} value={pw} onChange={e => setPw(e.target.value)}
+                placeholder="Admin password" required
+                className="w-full pl-10 pr-10 h-12 rounded-xl border border-border bg-background/60 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
-            <button type="submit" className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-body text-sm font-semibold hover:brightness-110 transition-all">Enter Admin Panel</button>
+            <button type="submit" className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-body text-sm font-semibold hover:brightness-110 transition-all">
+              Enter Admin Panel
+            </button>
           </form>
         </div>
       </div>
@@ -114,8 +126,8 @@ export default function Admin() {
 
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
           {NAV.map(item => (
-            <button key={item.id} onClick={() => { setActiveTab(item.id); setSidebarOpen(false); if (item.id === "messages") loadUnread(); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-body text-sm transition-all text-left ${activeTab===item.id ? "bg-primary text-primary-foreground font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+            <button key={item.id} onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-body text-sm transition-all text-left ${activeTab === item.id ? "bg-primary text-primary-foreground font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
               <item.icon size={16} />
               {item.label}
               {item.id === "messages" && unreadMessages > 0 && (
