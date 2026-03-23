@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Tag } from "lucide-react";
 import heroImg from "@/assets/hero-giftbox.jpg";
-import { getStore, seedDefaults, KEYS, type Offer } from "@/lib/jsonStore";
+import { getStore, seedDefaults, KEYS, type Offer } from "@/lib/sharedStore";
 
 const HeroSection = () => {
   const [offers, setOffers] = useState<Offer[]>([]);

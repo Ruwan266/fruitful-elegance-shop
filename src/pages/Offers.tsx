@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
-import { getStore, seedDefaults, KEYS, type Offer } from "@/lib/jsonStore";
+import { getStore, seedDefaults, KEYS, type Offer } from "@/lib/sharedStore";
 import { ArrowRight, Tag } from "lucide-react";
 
 export default function OffersPage() {

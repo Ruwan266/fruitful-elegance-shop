@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Tag } from "lucide-react";
-import { getStore, seedDefaults, KEYS, type Offer } from "@/lib/jsonStore";
+import { getStore, seedDefaults, KEYS, type Offer } from "@/lib/sharedStore";
 
 export default function OffersSection() {
   const [offers, setOffers] = useState<Offer[]>([]);

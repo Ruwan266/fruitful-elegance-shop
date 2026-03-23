@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   getStore, setStore, genId, seedDefaults,
   KEYS, type DeliveryOption,
-} from "@/lib/jsonStore";
+} from "@/lib/sharedStore";
 
 const EMOJI_PRESETS = ["🚚", "⚡", "📅", "🏎️", "✈️", "🛵", "📦", "🎁"];
 

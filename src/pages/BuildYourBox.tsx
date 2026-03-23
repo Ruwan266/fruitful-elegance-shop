@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   getStore, setStore, fileToBase64, genId, seedDefaults,
   KEYS, type BoxItem, type BoxMessage,
-} from "@/lib/jsonStore";
+} from "@/lib/sharedStore";
 
 const DEFAULT_SIZES = [
   { label: "S", description: "Up to 4 items", maxItems: 4, basePrice: 15 },

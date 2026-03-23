@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getStore, seedDefaults, KEYS, type Category } from "@/lib/jsonStore";
+import { getStore, seedDefaults, KEYS, type Category } from "@/lib/sharedStore";
 
 // Fallback static images for categories without uploaded images
 import fruitsImg    from "@/assets/fruits-collection.jpg";

@@ -13,7 +13,7 @@ import Content from "@/admin/Content";
 import SettingsPage from "@/admin/Settings";
 import Offers from "@/admin/Offers";
 import Delivery from "@/admin/Delivery";
-import { getStore, KEYS, type BoxMessage } from "@/lib/jsonStore";
+import { getStore, KEYS, type BoxMessage } from "@/lib/sharedStore";
 
 const ADMIN_SESSION = "fruitflix_admin_v2";
 
