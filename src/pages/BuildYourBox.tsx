@@ -6,37 +6,61 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus, Package, ShoppingBag, X, Send, ImageIcon, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getBoxItems, insertBoxMessage, fileToBase64, genId, type BoxItem } from "@/lib/sharedStore";
+import { supabase } from "@/lib/supabase";
 
+// ─── Default fallbacks ────────────────────────────────────────────────────────
 const DEFAULT_SIZES = [
-  { label: "S", description: "Up to 4 items", maxItems: 4, basePrice: 15 },
-  { label: "M", description: "Up to 6 items", maxItems: 6, basePrice: 25 },
-  { label: "L", description: "Up to 10 items", maxItems: 10, basePrice: 35 },
+  { id: "s1", label: "S", description: "Up to 4 items", max_items: 4, base_price: 15, sort_order: 1 },
+  { id: "s2", label: "M", description: "Up to 6 items", max_items: 6, base_price: 25, sort_order: 2 },
+  { id: "s3", label: "L", description: "Up to 10 items", max_items: 10, base_price: 35, sort_order: 3 },
 ];
 const DEFAULT_COLORS  = ["Forest Green", "Gold", "Cream", "Berry Red"];
 const DEFAULT_RIBBONS = [
-  { label: "Classic Gold",  value: "classic-gold",  price: 0 },
-  { label: "Satin Red",     value: "satin-red",      price: 5 },
-  { label: "Forest Green",  value: "forest-green",   price: 5 },
-  { label: "Pearl White",   value: "pearl-white",    price: 8 },
-  { label: "Royal Purple",  value: "royal-purple",   price: 8 },
+  { id: "r1", label: "Classic Gold",  value: "classic-gold",  price: 0,  sort_order: 1 },
+  { id: "r2", label: "Satin Red",     value: "satin-red",     price: 5,  sort_order: 2 },
+  { id: "r3", label: "Forest Green",  value: "forest-green",  price: 5,  sort_order: 3 },
+  { id: "r4", label: "Pearl White",   value: "pearl-white",   price: 8,  sort_order: 4 },
+  { id: "r5", label: "Royal Purple",  value: "royal-purple",  price: 8,  sort_order: 5 },
 ];
-const FILTER_TABS = ["all", "fruits", "nuts", "berries", "dates", "extras", "snacks", "chocolates"];
 
+const FILTER_TABS = ["all", "fruits", "nuts", "berries", "dates", "extras", "snacks", "chocolates"];
 interface SelectedItem { id: string; name: string; price: number; quantity: number; image: string; max_quantity: number; }
 
+// ─── Load settings from Supabase ─────────────────────────────────────────────
+async function loadSettings() {
+  try {
+    const [sizesRes, colorsRes, ribbonsRes] = await Promise.all([
+      supabase.from("app_box_sizes").select("*").order("sort_order"),
+      supabase.from("app_box_colors").select("*").order("sort_order"),
+      supabase.from("app_box_ribbons").select("*").order("sort_order"),
+    ]);
+    return {
+      sizes:   sizesRes.data?.length   ? sizesRes.data   : DEFAULT_SIZES,
+      colors:  colorsRes.data?.length  ? colorsRes.data.map((c: any) => c.name) : DEFAULT_COLORS,
+      ribbons: ribbonsRes.data?.length ? ribbonsRes.data : DEFAULT_RIBBONS,
+    };
+  } catch {
+    return { sizes: DEFAULT_SIZES, colors: DEFAULT_COLORS, ribbons: DEFAULT_RIBBONS };
+  }
+}
+
 export default function BuildYourBox() {
-  const [selectedSize,   setSelectedSize]   = useState(1);
-  const [selectedColor,  setSelectedColor]  = useState(0);
-  const [selectedRibbon, setSelectedRibbon] = useState(0);
-  const [selectedTab,    setSelectedTab]    = useState("all");
-  const [boxItems,       setBoxItems]       = useState<SelectedItem[]>([]);
-  const [dbItems,        setDbItems]        = useState<BoxItem[]>([]);
-  const [loadingItems,   setLoadingItems]   = useState(true);
-  const [messageText,    setMessageText]    = useState("");
-  const [messageImage,   setMessageImage]   = useState("");
-  const [uploadingImg,   setUploadingImg]   = useState(false);
-  const [messageSent,    setMessageSent]    = useState(false);
-  const [submitting,     setSubmitting]     = useState(false);
+  const [selectedSizeIdx, setSelectedSizeIdx] = useState(0);
+  const [selectedColor,   setSelectedColor]   = useState(0);
+  const [selectedRibbon,  setSelectedRibbon]  = useState(0);
+  const [selectedTab,     setSelectedTab]     = useState("all");
+  const [boxItems,        setBoxItems]        = useState<SelectedItem[]>([]);
+  const [dbItems,         setDbItems]         = useState<BoxItem[]>([]);
+  const [loadingItems,    setLoadingItems]    = useState(true);
+  const [messageText,     setMessageText]     = useState("");
+  const [messageImage,    setMessageImage]    = useState("");
+  const [uploadingImg,    setUploadingImg]    = useState(false);
+  const [messageSent,     setMessageSent]     = useState(false);
+  const [submitting,      setSubmitting]      = useState(false);
+
+  const [sizes,   setSizes]   = useState(DEFAULT_SIZES);
+  const [colors,  setColors]  = useState<string[]>(DEFAULT_COLORS);
+  const [ribbons, setRibbons] = useState(DEFAULT_RIBBONS);
 
   const { addToCart } = useCart();
   const { customer }  = useAuth();
@@ -44,19 +68,25 @@ export default function BuildYourBox() {
   const fileRef       = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    getBoxItems(true).then(data => { setDbItems(data); setLoadingItems(false); });
+    Promise.all([getBoxItems(true), loadSettings()]).then(([items, settings]) => {
+      setDbItems(items);
+      setSizes(settings.sizes);
+      setColors(settings.colors);
+      setRibbons(settings.ribbons);
+      setLoadingItems(false);
+    });
   }, []);
 
-  const boxSize        = DEFAULT_SIZES[selectedSize];
-  const ribbon         = DEFAULT_RIBBONS[selectedRibbon];
+  const boxSize        = sizes[selectedSizeIdx] || DEFAULT_SIZES[0];
+  const ribbon         = ribbons[selectedRibbon] || DEFAULT_RIBBONS[0];
   const totalItemCount = boxItems.reduce((s, i) => s + i.quantity, 0);
   const itemsPrice     = boxItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  const totalPrice     = itemsPrice + boxSize.basePrice + ribbon.price;
+  const totalPrice     = itemsPrice + (boxSize.base_price || 0) + (ribbon.price || 0);
   const filteredItems  = selectedTab === "all" ? dbItems : dbItems.filter(i => i.category === selectedTab);
 
   function addItem(item: BoxItem) {
-    if (totalItemCount >= boxSize.maxItems) {
-      toast({ title: "Box is full!", description: `Size ${boxSize.label} holds max ${boxSize.maxItems} items.`, variant: "destructive" }); return;
+    if (totalItemCount >= boxSize.max_items) {
+      toast({ title: "Box is full!", description: `Size ${boxSize.label} holds max ${boxSize.max_items} items.`, variant: "destructive" }); return;
     }
     setBoxItems(prev => {
       const ex = prev.find(i => i.id === item.id);
@@ -87,9 +117,7 @@ export default function BuildYourBox() {
   }
 
   async function sendMessage() {
-    if (!messageText.trim() && !messageImage) {
-      toast({ title: "Please write a message or attach an image", variant: "destructive" }); return;
-    }
+    if (!messageText.trim() && !messageImage) { toast({ title: "Please write a message or attach an image", variant: "destructive" }); return; }
     try {
       await insertBoxMessage({
         customer_name:  customer ? `${customer.firstName} ${customer.lastName}` : "Guest",
@@ -97,11 +125,10 @@ export default function BuildYourBox() {
         message:        messageText.trim(),
         image:          messageImage,
         box_details: {
-          size:   boxSize.label,
-          color:  DEFAULT_COLORS[selectedColor],
+          size: boxSize.label, color: colors[selectedColor] || "",
           ribbon: ribbon.label,
-          items:  boxItems.map(i => ({ name: i.name, qty: i.quantity, price: i.price })),
-          total:  totalPrice,
+          items: boxItems.map(i => ({ name: i.name, qty: i.quantity, price: i.price })),
+          total: totalPrice,
         },
         read: false,
       });
@@ -117,12 +144,12 @@ export default function BuildYourBox() {
     setSubmitting(true);
     if (messageText.trim() && !messageSent) await sendMessage();
     const customProduct = {
-      id: `custom-${genId()}`, title: `Custom Box (${boxSize.label}) — ${DEFAULT_COLORS[selectedColor]}`,
+      id: `custom-${genId()}`, title: `Custom Box (${boxSize.label}) — ${colors[selectedColor] || ""}`,
       price: totalPrice, image: boxItems[0]?.image || "", images: [], category: "gift-boxes",
       rating: 5, reviewCount: 0, description: `Custom box with ${totalItemCount} items`,
       sizes: [], colors: [], inStock: true, sku: "", tags: [],
     } as any;
-    addToCart(customProduct, 1, boxSize.label, DEFAULT_COLORS[selectedColor]);
+    addToCart(customProduct, 1, boxSize.label, colors[selectedColor] || "");
     toast({ title: "Custom box added to cart! 🎁" });
     setBoxItems([]); setMessageText(""); setMessageImage(""); setMessageSent(false); setSubmitting(false);
   }
@@ -137,25 +164,27 @@ export default function BuildYourBox() {
             <p className="font-body text-muted-foreground mt-2 max-w-lg mx-auto">Create a bespoke gift box. Choose your size, pick your favourites, and we'll wrap it beautifully.</p>
           </div>
 
+          {/* Step 1: Size */}
           <div className="mb-12">
-            <div className="flex items-center gap-3 mb-6"><div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-body text-sm font-semibold">1</div><h2 className="font-display text-xl font-semibold">Choose Box Size</h2></div>
-            <div className="grid grid-cols-3 gap-4 max-w-lg">
-              {DEFAULT_SIZES.map((size, i) => (
-                <button key={size.label} onClick={() => { setSelectedSize(i); setBoxItems([]); }}
-                  className={`p-5 rounded-2xl text-center transition-all btn-press ${selectedSize === i ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-secondary text-secondary-foreground hover:bg-primary/10"}`}>
+            <StepHeader n={1} label="Choose Box Size" />
+            <div className="flex flex-wrap gap-4">
+              {sizes.map((size, i) => (
+                <button key={size.id} onClick={() => { setSelectedSizeIdx(i); setBoxItems([]); }}
+                  className={`p-5 rounded-2xl text-center transition-all btn-press min-w-[110px] ${selectedSizeIdx === i ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-secondary text-secondary-foreground hover:bg-primary/10"}`}>
                   <span className="font-display text-2xl font-semibold">{size.label}</span>
                   <p className="font-body text-xs mt-1 opacity-80">{size.description}</p>
-                  <p className="font-body text-xs mt-1 opacity-60">+AED {size.basePrice}</p>
+                  <p className="font-body text-xs mt-1 opacity-60">+AED {size.base_price}</p>
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Step 2: Color */}
           <div className="mb-12">
-            <div className="flex items-center gap-3 mb-6"><div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-body text-sm font-semibold">2</div><h2 className="font-display text-xl font-semibold">Choose Box Color</h2></div>
+            <StepHeader n={2} label="Choose Box Color" />
             <div className="flex flex-wrap gap-3">
-              {DEFAULT_COLORS.map((color, i) => (
-                <button key={color} onClick={() => setSelectedColor(i)}
+              {colors.map((color, i) => (
+                <button key={i} onClick={() => setSelectedColor(i)}
                   className={`px-5 py-3 rounded-full font-body text-xs font-medium transition-all btn-press ${selectedColor === i ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-primary/10"}`}>
                   {color}
                 </button>
@@ -163,11 +192,12 @@ export default function BuildYourBox() {
             </div>
           </div>
 
+          {/* Step 3: Ribbon */}
           <div className="mb-12">
-            <div className="flex items-center gap-3 mb-6"><div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-body text-sm font-semibold">3</div><h2 className="font-display text-xl font-semibold">Choose Ribbon</h2></div>
+            <StepHeader n={3} label="Choose Ribbon" />
             <div className="flex flex-wrap gap-3">
-              {DEFAULT_RIBBONS.map((r, i) => (
-                <button key={r.value} onClick={() => setSelectedRibbon(i)}
+              {ribbons.map((r, i) => (
+                <button key={r.id} onClick={() => setSelectedRibbon(i)}
                   className={`px-5 py-3 rounded-full font-body text-xs font-medium transition-all btn-press ${selectedRibbon === i ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-primary/10"}`}>
                   {r.label}{r.price > 0 ? ` (+AED ${r.price})` : ""}
                 </button>
@@ -175,13 +205,14 @@ export default function BuildYourBox() {
             </div>
           </div>
 
+          {/* Step 4 + Summary */}
           <div className="grid lg:grid-cols-12 gap-8">
             <div className="lg:col-span-7 space-y-12">
               <div>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-body text-sm font-semibold">4</div>
+                  <StepBadge n={4} />
                   <h2 className="font-display text-xl font-semibold">Select Your Items</h2>
-                  <span className="font-body text-xs text-muted-foreground ml-auto">{totalItemCount}/{boxSize.maxItems} selected</span>
+                  <span className="font-body text-xs text-muted-foreground ml-auto">{totalItemCount}/{boxSize.max_items} selected</span>
                 </div>
                 <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
                   {FILTER_TABS.map(tab => (
@@ -200,7 +231,7 @@ export default function BuildYourBox() {
                     {filteredItems.map(item => {
                       const inBox = boxItems.find(i => i.id === item.id);
                       const atMax = inBox && inBox.quantity >= item.max_quantity;
-                      const boxFull = totalItemCount >= boxSize.maxItems && !inBox;
+                      const boxFull = totalItemCount >= boxSize.max_items && !inBox;
                       const disabled = boxFull || !!atMax;
                       return (
                         <motion.div key={item.id} whileTap={{ scale: 0.97 }}
@@ -229,9 +260,10 @@ export default function BuildYourBox() {
                 )}
               </div>
 
+              {/* Step 5: Message */}
               <div>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-body text-sm font-semibold">5</div>
+                  <StepBadge n={5} />
                   <h2 className="font-display text-xl font-semibold">Add a Personal Message</h2>
                   <span className="font-body text-xs text-muted-foreground">(Optional)</span>
                 </div>
@@ -269,11 +301,13 @@ export default function BuildYourBox() {
               </div>
             </div>
 
+            {/* Summary */}
             <div className="lg:col-span-5 lg:sticky lg:top-32 lg:self-start">
               <div className="card-premium p-8 space-y-6" style={{ borderRadius: "32px" }}>
                 <h3 className="font-display text-xl font-semibold">Your Custom Box</h3>
                 <div className="flex flex-wrap items-center gap-2 font-body text-xs text-muted-foreground">
-                  <Package size={14} /><span>Size {boxSize.label}</span><span>·</span><span>{DEFAULT_COLORS[selectedColor]}</span><span>·</span><span>{ribbon.label} ribbon</span>
+                  <Package size={14} /><span>Size {boxSize.label}</span><span>·</span>
+                  <span>{colors[selectedColor] || ""}</span><span>·</span><span>{ribbon.label} ribbon</span>
                 </div>
                 <div className="aspect-square bg-muted rounded-2xl p-4 flex flex-wrap content-start gap-2 border-2 border-dashed border-border relative overflow-hidden">
                   {boxItems.length === 0 ? (
@@ -287,7 +321,7 @@ export default function BuildYourBox() {
                       )))}
                     </AnimatePresence>
                   )}
-                  <div className="absolute bottom-2 right-2 bg-black/40 text-white font-body text-[10px] px-2 py-0.5 rounded-full">{totalItemCount}/{boxSize.maxItems}</div>
+                  <div className="absolute bottom-2 right-2 bg-black/40 text-white font-body text-[10px] px-2 py-0.5 rounded-full">{totalItemCount}/{boxSize.max_items}</div>
                 </div>
                 {boxItems.length > 0 && (
                   <div className="space-y-2 max-h-44 overflow-y-auto">
@@ -297,7 +331,7 @@ export default function BuildYourBox() {
                         <div className="flex items-center gap-1">
                           <button onClick={() => removeItem(item.id)} className="p-1 btn-press text-muted-foreground hover:text-primary"><Minus size={12} /></button>
                           <span className="font-body text-xs w-5 text-center">{item.quantity}</span>
-                          <button onClick={() => addItem(dbItems.find(d => d.id === item.id)!)} disabled={totalItemCount >= boxSize.maxItems || item.quantity >= item.max_quantity} className="p-1 btn-press text-muted-foreground hover:text-primary disabled:opacity-40"><Plus size={12} /></button>
+                          <button onClick={() => addItem(dbItems.find(d => d.id === item.id)!)} disabled={totalItemCount >= boxSize.max_items || item.quantity >= item.max_quantity} className="p-1 btn-press text-muted-foreground hover:text-primary disabled:opacity-40"><Plus size={12} /></button>
                         </div>
                         <span className="font-body text-xs text-muted-foreground w-16 text-right">AED {item.price * item.quantity}</span>
                         <button onClick={() => setBoxItems(prev => prev.filter(i => i.id !== item.id))} className="p-1 text-muted-foreground hover:text-destructive"><X size={12} /></button>
@@ -306,8 +340,8 @@ export default function BuildYourBox() {
                   </div>
                 )}
                 <div className="space-y-2 pt-4 border-t border-border">
-                  <div className="flex justify-between font-body text-sm"><span className="text-muted-foreground">Box ({boxSize.label})</span><span>AED {boxSize.basePrice}</span></div>
-                  {ribbon.price > 0 && <div className="flex justify-between font-body text-sm"><span className="text-muted-foreground">{ribbon.label} ribbon</span><span>AED {ribbon.price}</span></div>}
+                  <div className="flex justify-between font-body text-sm"><span className="text-muted-foreground">Box ({boxSize.label})</span><span>AED {boxSize.base_price}</span></div>
+                  {ribbon.price > 0 && <div className="flex justify-between font-body text-sm"><span className="text-muted-foreground">{ribbon.label}</span><span>AED {ribbon.price}</span></div>}
                   <div className="flex justify-between font-body text-sm"><span className="text-muted-foreground">Items ({totalItemCount})</span><span>AED {itemsPrice}</span></div>
                   <div className="flex justify-between font-body text-lg font-semibold pt-2 border-t border-border"><span>Total</span><span>AED {totalPrice}</span></div>
                 </div>
@@ -328,4 +362,11 @@ export default function BuildYourBox() {
       </section>
     </Layout>
   );
+}
+
+function StepHeader({ n, label }: { n: number; label: string }) {
+  return <div className="flex items-center gap-3 mb-6"><StepBadge n={n} /><h2 className="font-display text-xl font-semibold">{label}</h2></div>;
+}
+function StepBadge({ n }: { n: number }) {
+  return <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-body text-sm font-semibold flex-shrink-0">{n}</div>;
 }
