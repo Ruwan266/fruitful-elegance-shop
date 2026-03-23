@@ -13,7 +13,7 @@ import Content from "@/admin/Content";
 import SettingsPage from "@/admin/Settings";
 import Offers from "@/admin/Offers";
 import Delivery from "@/admin/Delivery";
-import { getStore, KEYS, type BoxMessage } from "@/lib/sharedStore";
+import { getBoxMessages } from "@/lib/sharedStore";
 
 const ADMIN_SESSION = "fruitflix_admin_v2";
 
@@ -52,9 +52,9 @@ export default function Admin() {
     return () => clearInterval(interval);
   }, [authed]);
 
-  function loadUnread() {
-    const msgs = getStore<BoxMessage[]>(KEYS.BOX_MESSAGES, []);
-    setUnreadMessages(msgs.filter(m => !m.read).length);
+  async function loadUnread() {
+    const msgs = await getBoxMessages();
+    setUnreadMessages(msgs.filter((m: any) => !m.read).length);
   }
 
   function handleLogin(e: React.FormEvent) {
