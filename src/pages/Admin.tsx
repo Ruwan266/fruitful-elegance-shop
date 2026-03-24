@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, LayoutDashboard, ShoppingBag, Users, BarChart3, Package, Settings, FileText, Box, LogOut, Menu, ExternalLink, MessageSquare, FolderOpen, Bell, Tag, Truck, SlidersHorizontal } from "lucide-react";
+import { Eye, EyeOff, Lock, LayoutDashboard, ShoppingBag, Users, BarChart3, Package, Settings, FileText, Box, LogOut, Menu, ExternalLink, MessageSquare, FolderOpen, Bell, Tag, SlidersHorizontal } from "lucide-react";
 import Dashboard from "@/admin/Dashboard";
 import Products from "@/admin/Products";
 import Orders from "@/admin/Orders";
@@ -12,7 +12,6 @@ import Messages from "@/admin/Messages";
 import Content from "@/admin/Content";
 import SettingsPage from "@/admin/Settings";
 import Offers from "@/admin/Offers";
-import Delivery from "@/admin/Delivery";
 import BoxSettings from "@/admin/BoxSettings";
 import { getBoxMessages } from "@/lib/sharedStore";
 
@@ -27,7 +26,6 @@ const NAV = [
   { id: "customers",   label: "Customers",      icon: Users },
   { id: "analytics",   label: "Analytics",      icon: BarChart3 },
   { id: "box-builder", label: "Box Builder",    icon: Box },
-  { id: "delivery",     label: "Delivery",       icon: Truck },
   { id: "box-settings", label: "Box Settings",   icon: SlidersHorizontal },
   { id: "messages",    label: "Messages",       icon: MessageSquare },
   { id: "content",     label: "Content",        icon: FileText },
@@ -78,7 +76,6 @@ export default function Admin() {
       case "customers":   return <Customers />;
       case "analytics":   return <Analytics />;
       case "box-builder": return <BoxBuilder />;
-      case "delivery":     return <Delivery />;
       case "box-settings": return <BoxSettings />;
       case "messages":    return <Messages />;
       case "content":     return <Content />;

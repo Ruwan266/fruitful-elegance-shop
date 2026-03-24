@@ -1,14 +1,48 @@
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useCart } from "@/context/CartContext";
-import { Minus, Plus, X, Truck, ArrowRight, Tag } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Minus, Plus, X, Truck, ArrowRight, Tag, Lock, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { createShopifyCheckout } from "@/lib/shopifyCheckout";
+import { useToast } from "@/hooks/use-toast";
 
 const Cart = () => {
   const { items, removeFromCart, updateQuantity, subtotal } = useCart();
+  const { accessToken } = useAuth();
+  const { toast } = useToast();
   const [coupon, setCoupon] = useState("");
-  // Shipping calculated at checkout based on delivery method
+  const [checkingOut, setCheckingOut] = useState(false);
+
+  // Shopify items have variantId, custom boxes don't
+  const shopifyItems = items.filter(i => i.product.variantId);
+  const customItems  = items.filter(i => !i.product.variantId);
+  const WHATSAPP = "971503645103";
+
+  async function handleCheckout() {
+    if (!items.length) return;
+    setCheckingOut(true);
+
+    // If only custom boxes → WhatsApp
+    if (customItems.length > 0 && shopifyItems.length === 0) {
+      const lines = customItems.map(i => `• ${i.product.title} x${i.quantity} — AED ${i.product.price * i.quantity}`).join("\n");
+      const msg = encodeURIComponent(`🎁 *Custom Box Order — FruitFlix UAE*\n\n${lines}\n\n*Total:* AED ${subtotal}\n\nKindly confirm my order. Thank you! 🙏`);
+      window.open(`https://wa.me/${WHATSAPP}?text=${msg}`, "_blank");
+      setCheckingOut(false);
+      return;
+    }
+
+    // Shopify items → direct to Shopify checkout
+    try {
+      const url = await createShopifyCheckout(shopifyItems, accessToken ?? undefined);
+      window.location.href = url;
+    } catch (err: any) {
+      toast({ title: "Checkout error", description: err.message, variant: "destructive" });
+      setCheckingOut(false);
+    }
+  }
+
   const total = subtotal;
 
   if (items.length === 0) {
@@ -138,12 +172,18 @@ const Cart = () => {
                   </p>
                 </div>
 
-                <Link
-                  to="/checkout"
-                  className="block w-full py-4 bg-primary text-primary-foreground rounded-full font-body text-sm font-semibold text-center hover:brightness-110 transition-all btn-press shadow-lg shadow-primary/20"
+                <button
+                  onClick={handleCheckout}
+                  disabled={checkingOut || items.length === 0}
+                  className="flex items-center justify-center gap-2 w-full py-4 bg-primary text-primary-foreground rounded-full font-body text-sm font-semibold text-center hover:brightness-110 transition-all btn-press shadow-lg shadow-primary/20 disabled:opacity-60"
                 >
-                  Proceed to Checkout
-                </Link>
+                  {checkingOut
+                    ? <><Loader2 size={16} className="animate-spin" /> Processing...</>
+                    : customItems.length > 0 && shopifyItems.length === 0
+                      ? <><span>Order via WhatsApp 📲</span></>
+                      : <><Lock size={16} /> Proceed to Checkout</>
+                  }
+                </button>
 
                 {/* Trust */}
                 <div className="flex items-center justify-center gap-4 pt-2">
