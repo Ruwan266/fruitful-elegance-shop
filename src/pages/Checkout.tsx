@@ -19,9 +19,8 @@ interface DeliveryOption {
 }
 
 const DEFAULT_DELIVERY: DeliveryOption[] = [
-  { id: "d1", name: "Same-Day Delivery", description: "Order before 2 PM", price: 0,  estimated_time: "2-4 hours",  icon: "⚡", is_active: true, sort_order: 1 },
-  { id: "d2", name: "Next-Day Delivery", description: "Delivered tomorrow", price: 0,  estimated_time: "Next day",   icon: "🚚", is_active: true, sort_order: 2 },
-  { id: "d3", name: "Scheduled",         description: "Pick your slot",     price: 15, estimated_time: "Your slot",  icon: "📅", is_active: true, sort_order: 3 },
+  { id: "d1", name: "Standard Delivery", description: "Free delivery on orders above AED 200", price: 0, estimated_time: "2-4 hours", icon: "🚚", is_active: true, sort_order: 1 },
+  { id: "d2", name: "Express Delivery",  description: "Priority same-day delivery",            price: 35, estimated_time: "~2 hours", icon: "⚡", is_active: true, sort_order: 2 },
 ];
 
 const Checkout = () => {
@@ -35,7 +34,6 @@ const Checkout = () => {
   const [selectedDelivery, setSelectedDelivery] = useState("d1");
   const [deliveryDate, setDeliveryDate] = useState("");
 
-  // Load delivery options from Supabase
   useEffect(() => {
     supabase.from("app_delivery_options").select("*").eq("is_active", true).order("sort_order")
       .then(({ data }) => {
@@ -51,21 +49,18 @@ const Checkout = () => {
   const hasShopify   = shopifyItems.length > 0;
   const hasCustom    = customItems.length > 0;
 
-  const selectedOpt   = deliveryOptions.find(o => o.id === selectedDelivery) || deliveryOptions[0];
-  const deliveryCost  = selectedOpt?.price || 0;
-  const freeThreshold = 200;
-  // Shipping = delivery option price, free if order >= 200 AND delivery is free option
-  const shipping      = subtotal >= freeThreshold && deliveryCost === 0 ? 0 : deliveryCost === 0 ? 25 : deliveryCost;
-  const total         = subtotal + shipping;
-  const needsDate     = selectedOpt?.name?.toLowerCase().includes("schedul");
+  const selectedOpt  = deliveryOptions.find(o => o.id === selectedDelivery) || deliveryOptions[0];
+  const deliveryCost = selectedOpt?.price || 0;
+  // Free standard delivery above AED 200, paid options always charged
+  const shipping     = deliveryCost > 0 ? deliveryCost : subtotal >= 200 ? 0 : 25;
+  const total        = subtotal + shipping;
+  const needsDate    = selectedOpt?.name?.toLowerCase().includes("schedul");
 
-  // ── Shopify Checkout with delivery note ──────────────────────────────────
+  // ── Shopify Checkout ────────────────────────────────────────────────────────
   const handleShopifyCheckout = async () => {
     setLoading(true);
     try {
-      const deliveryNote = selectedOpt
-        ? `Delivery: ${selectedOpt.name} (${selectedOpt.estimated_time})${deliveryDate ? ` | Date: ${deliveryDate}` : ""}`
-        : "";
+      const deliveryNote = `Delivery: ${selectedOpt?.name} (${selectedOpt?.estimated_time})${deliveryDate ? ` | Date: ${deliveryDate}` : ""}`;
       const url = await createShopifyCheckout(shopifyItems, accessToken ?? undefined, deliveryNote);
       window.location.href = url;
     } catch (err: any) {
@@ -74,15 +69,15 @@ const Checkout = () => {
     }
   };
 
-  // ── Custom Box → WhatsApp ─────────────────────────────────────────────────
+  // ── Custom Box → WhatsApp ───────────────────────────────────────────────────
   const handleWhatsApp = () => {
     const lines = customItems.map(i =>
       `• ${i.product.title} x${i.quantity} — AED ${i.product.price * i.quantity}`
     ).join("\n");
     const msg = encodeURIComponent(
       `🎁 *New Custom Box Order — FruitFlix UAE*\n\n${lines}\n\n` +
-      `*Delivery:* ${selectedOpt?.name || "Standard"} (${selectedOpt?.estimated_time || ""})\n` +
-      (deliveryDate ? `*Preferred Date:* ${deliveryDate}\n` : "") +
+      `*Delivery:* ${selectedOpt?.name} (${selectedOpt?.estimated_time})\n` +
+      (deliveryDate ? `*Date:* ${deliveryDate}\n` : "") +
       `*Subtotal:* AED ${customItems.reduce((s, i) => s + i.product.price * i.quantity, 0)}\n` +
       `*Shipping:* ${shipping === 0 ? "Free" : `AED ${shipping}`}\n` +
       `*Total:* AED ${total}\n\n` +
@@ -112,20 +107,18 @@ const Checkout = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="font-body text-xs text-muted-foreground mb-1 block">Email</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                      placeholder="your@email.com"
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com"
                       className="w-full px-4 py-3 bg-muted rounded-xl font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div>
                     <label className="font-body text-xs text-muted-foreground mb-1 block">Phone</label>
-                    <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                      placeholder="+971 50 123 4567"
+                    <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+971 50 123 4567"
                       className="w-full px-4 py-3 bg-muted rounded-xl font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                 </div>
               </div>
 
-              {/* Step 2: Delivery Options */}
+              {/* Step 2: Delivery */}
               <div className="card-premium p-8 space-y-5">
                 <h2 className="font-display text-xl font-semibold flex items-center gap-2">
                   <span className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-body text-xs font-bold">2</span>
@@ -149,15 +142,12 @@ const Checkout = () => {
                           }
                         </div>
                         <p className="font-body text-xs text-muted-foreground mt-0.5">{opt.description}</p>
-                        <p className="font-body text-xs text-primary mt-0.5 flex items-center gap-1">
-                          <Clock size={10} /> {opt.estimated_time}
-                        </p>
+                        <p className="font-body text-xs text-primary mt-0.5 flex items-center gap-1"><Clock size={10} /> {opt.estimated_time}</p>
                       </div>
                     </motion.button>
                   ))}
                 </div>
 
-                {/* Date picker for scheduled */}
                 <AnimatePresence>
                   {needsDate && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
@@ -171,9 +161,17 @@ const Checkout = () => {
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {/* Delivery note for Shopify */}
+                {hasShopify && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 font-body text-xs text-amber-700">
+                    <p className="font-semibold mb-0.5">ℹ️ Note about Shopify checkout</p>
+                    <p>Your selected delivery method will be added as an order note. Shopify may show its own shipping rates — our team will apply your chosen delivery method and refund any difference.</p>
+                  </div>
+                )}
               </div>
 
-              {/* Step 3: Custom Box Notice */}
+              {/* Custom Box Notice */}
               {hasCustom && (
                 <div className="card-premium p-6 border-2 border-green-200 bg-green-50/50">
                   <div className="flex items-start gap-4">
@@ -196,7 +194,7 @@ const Checkout = () => {
                 </div>
               )}
 
-              {/* Step 3/4: Shopify Payment */}
+              {/* Shopify Payment */}
               {hasShopify && (
                 <div className="card-premium p-8">
                   <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2">
@@ -205,7 +203,7 @@ const Checkout = () => {
                   </h2>
                   <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 font-body text-sm text-muted-foreground">
                     <p className="font-medium text-foreground mb-1">🔒 Checkout powered by Shopify</p>
-                    <p>You'll be taken to Shopify's secure checkout to enter your address and payment details. Your selected delivery method will be included as an order note.</p>
+                    <p>You'll be taken to Shopify's secure checkout. Your delivery preference will be included as an order note and our team will arrange accordingly.</p>
                   </div>
                 </div>
               )}
@@ -254,8 +252,8 @@ const Checkout = () => {
                           <p className="font-body text-[10px] text-muted-foreground">{selectedOpt.estimated_time}</p>
                         </div>
                         {selectedOpt.price === 0
-                          ? <span className="font-body text-xs text-green-600 font-medium">Free</span>
-                          : <span className="font-body text-xs font-medium">+AED {selectedOpt.price}</span>
+                          ? <span className="font-body text-xs text-green-600 font-medium">{subtotal >= 200 ? "Free" : "AED 25"}</span>
+                          : <span className="font-body text-xs font-medium">AED {selectedOpt.price}</span>
                         }
                       </div>
                     )}
@@ -266,14 +264,14 @@ const Checkout = () => {
                         <span>AED {subtotal.toFixed(0)}</span>
                       </div>
                       <div className="flex justify-between font-body text-sm">
-                        <span className="text-muted-foreground">Shipping</span>
+                        <span className="text-muted-foreground">Delivery</span>
                         <span className={shipping === 0 ? "text-green-600 font-medium" : ""}>
                           {shipping === 0 ? "Free 🎉" : `AED ${shipping}`}
                         </span>
                       </div>
-                      {subtotal < freeThreshold && shipping > 0 && (
+                      {subtotal < 200 && shipping > 0 && deliveryCost === 0 && (
                         <p className="font-body text-xs text-muted-foreground">
-                          Add AED {(freeThreshold - subtotal).toFixed(0)} more for free delivery
+                          Add AED {(200 - subtotal).toFixed(0)} more for free delivery
                         </p>
                       )}
                       <div className="flex justify-between font-body text-lg font-semibold pt-2 border-t border-border">
@@ -283,15 +281,12 @@ const Checkout = () => {
                     </div>
 
                     <div className="space-y-3">
-                      {/* Custom only → WhatsApp */}
                       {!hasShopify && hasCustom && (
                         <button onClick={handleWhatsApp} disabled={loading}
                           className="w-full py-4 bg-green-600 text-white rounded-full font-body text-sm font-semibold hover:brightness-110 transition-all btn-press shadow-lg flex items-center justify-center gap-2 disabled:opacity-60">
                           <MessageCircle size={18} /> Order via WhatsApp 📲
                         </button>
                       )}
-
-                      {/* Shopify only */}
                       {hasShopify && !hasCustom && (
                         <button onClick={handleShopifyCheckout} disabled={loading}
                           className="w-full py-4 bg-primary text-primary-foreground rounded-full font-body text-sm font-semibold hover:brightness-110 transition-all btn-press shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-60">
@@ -299,8 +294,6 @@ const Checkout = () => {
                           {loading ? "Processing..." : "Proceed to Checkout"}
                         </button>
                       )}
-
-                      {/* Mixed */}
                       {hasShopify && hasCustom && (
                         <div className="space-y-2">
                           <button onClick={handleShopifyCheckout} disabled={loading}
@@ -314,7 +307,6 @@ const Checkout = () => {
                           </button>
                         </div>
                       )}
-
                       <div className="flex items-center justify-center gap-4 text-muted-foreground">
                         <div className="flex items-center gap-1 font-body text-xs"><Shield size={11} /> Secure</div>
                         <div className="flex items-center gap-1 font-body text-xs"><Truck size={11} /> UAE Delivery</div>

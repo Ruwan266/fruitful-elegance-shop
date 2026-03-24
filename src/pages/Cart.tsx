@@ -8,8 +8,8 @@ import { motion } from "framer-motion";
 const Cart = () => {
   const { items, removeFromCart, updateQuantity, subtotal } = useCart();
   const [coupon, setCoupon] = useState("");
-  const shipping = subtotal >= 200 ? 0 : 25;
-  const total = subtotal + shipping;
+  // Shipping calculated at checkout based on delivery method
+  const total = subtotal;
 
   if (items.length === 0) {
     return (
@@ -135,13 +135,11 @@ const Cart = () => {
                   </div>
                   <div className="flex justify-between font-body text-sm">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span className={shipping === 0 ? "text-primary font-medium" : ""}>
-                      {shipping === 0 ? "Free" : `AED ${shipping}`}
-                    </span>
+                    <span className="text-primary font-medium font-body text-xs">Calculated at checkout</span>
                   </div>
                   <div className="flex justify-between font-body text-lg font-semibold pt-3 border-t border-border">
-                    <span>Total</span>
-                    <span>AED {total.toFixed(0)}</span>
+                    <span>Subtotal</span>
+                    <span>AED {subtotal.toFixed(0)}</span>
                   </div>
                 </div>
 
