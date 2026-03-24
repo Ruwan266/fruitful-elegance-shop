@@ -19,7 +19,6 @@ const ProductDetail = () => {
 
   const { addToCart } = useCart();
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -119,15 +118,6 @@ const ProductDetail = () => {
               )}
 
               <div>
-                <h3 className="font-body text-sm font-semibold mb-3">Box Size</h3>
-                <div className="flex gap-3">
-                  {product.sizes.map(size => (
-                    <button key={size} onClick={() => setSelectedSize(size)} className={`w-14 h-14 rounded-2xl font-body text-sm font-medium transition-all btn-press ${selectedSize === size ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-secondary text-secondary-foreground hover:bg-primary/10"}`}>{size}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
                 <h3 className="font-body text-sm font-semibold mb-3">Box Color</h3>
                 <div className="flex gap-3">
                   {product.colors.map(color => (
@@ -142,7 +132,7 @@ const ProductDetail = () => {
                   <span className="w-12 text-center font-body font-semibold">{quantity}</span>
                   <button onClick={() => setQuantity(quantity + 1)} className="p-3 hover:text-primary transition-colors btn-press"><Plus size={18} /></button>
                 </div>
-                <button onClick={() => addToCart(product, quantity, selectedSize || product.sizes[0], selectedColor || product.colors[0])} className="flex-1 py-4 bg-primary text-primary-foreground rounded-full font-body text-sm font-semibold hover:brightness-110 transition-all btn-press shadow-lg shadow-primary/20">
+                <button onClick={() => addToCart(product, quantity, "", selectedColor || product.colors[0] || "")} className="flex-1 py-4 bg-primary text-primary-foreground rounded-full font-body text-sm font-semibold hover:brightness-110 transition-all btn-press shadow-lg shadow-primary/20">
                   Add to Cart — AED {product.price * quantity}
                 </button>
                 <button className="p-4 rounded-full border border-border hover:border-berry hover:text-berry transition-all btn-press"><Heart size={20} /></button>

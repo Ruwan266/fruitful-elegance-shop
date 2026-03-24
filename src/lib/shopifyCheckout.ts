@@ -18,9 +18,9 @@ const CART_CREATE = `
 
 export async function createShopifyCheckout(
   items: CartItem[],
-  customerAccessToken?: string
+  customerAccessToken?: string,
+  deliveryNote?: string
 ): Promise<string> {
-  // Map local cart items to Shopify line items using stored variantId
   const lines = items
     .filter((item) => item.product.variantId)
     .map((item) => ({
@@ -29,12 +29,17 @@ export async function createShopifyCheckout(
     }));
 
   if (!lines.length) {
-    throw new Error(
-      "No Shopify variant IDs found. Make sure products are loaded from Shopify."
-    );
+    throw new Error("No Shopify variant IDs found. Make sure products are loaded from Shopify.");
   }
 
   const input: any = { lines };
+
+  // Add delivery method as order note/attribute
+  if (deliveryNote) {
+    input.note = deliveryNote;
+    input.attributes = [{ key: "Delivery Method", value: deliveryNote }];
+  }
+
   if (customerAccessToken) {
     input.buyerIdentity = { customerAccessToken };
   }
