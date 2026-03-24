@@ -129,18 +129,13 @@ const Cart = () => {
 
                 {/* Totals */}
                 <div className="space-y-3 border-t border-border pt-4">
-                  <div className="flex justify-between font-body text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>AED {subtotal.toFixed(0)}</span>
-                  </div>
-                  <div className="flex justify-between font-body text-sm">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span className="text-primary font-medium font-body text-xs">Calculated at checkout</span>
-                  </div>
-                  <div className="flex justify-between font-body text-lg font-semibold pt-3 border-t border-border">
+                  <div className="flex justify-between font-body text-lg font-semibold">
                     <span>Subtotal</span>
                     <span>AED {subtotal.toFixed(0)}</span>
                   </div>
+                  <p className="font-body text-xs text-muted-foreground">
+                    🚚 Shipping &amp; delivery calculated at checkout
+                  </p>
                 </div>
 
                 <Link
