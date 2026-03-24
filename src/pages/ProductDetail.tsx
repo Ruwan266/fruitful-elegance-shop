@@ -6,7 +6,8 @@ import { useShopifyProducts, useShopifyProduct } from "@/hooks/useShopifyProduct
 import { products as staticProducts } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Minus, Plus, Heart, Share2, Truck, Shield, Package, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Star, Minus, Plus, Heart, Share2, Truck, Shield, Package, ChevronDown, ChevronUp, Loader2, MessageCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
@@ -18,7 +19,9 @@ const ProductDetail = () => {
   const product = shopifyProduct ?? staticFallback;
 
   const { addToCart } = useCart();
+  const { toast } = useToast();
   const [selectedImage, setSelectedImage] = useState(0);
+  const WHATSAPP = "971503645103";
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -106,7 +109,11 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              <p className="font-body text-muted-foreground leading-relaxed">{product.description}</p>
+              <div className="font-body text-muted-foreground leading-relaxed text-sm space-y-1">
+                {product.description?.split(/\n|•/).filter(Boolean).map((line, i) => (
+                  <p key={i}>{line.trim().startsWith("•") ? line : (i === 0 ? line : `• ${line}`)}</p>
+                ))}
+              </div>
 
               {product.whatsInside && (
                 <div className="p-5 rounded-2xl bg-secondary/50 space-y-3">
@@ -132,7 +139,22 @@ const ProductDetail = () => {
                   <span className="w-12 text-center font-body font-semibold">{quantity}</span>
                   <button onClick={() => setQuantity(quantity + 1)} className="p-3 hover:text-primary transition-colors btn-press"><Plus size={18} /></button>
                 </div>
-                <button onClick={() => addToCart(product, quantity, "", selectedColor || product.colors[0] || "")} className="flex-1 py-4 bg-primary text-primary-foreground rounded-full font-body text-sm font-semibold hover:brightness-110 transition-all btn-press shadow-lg shadow-primary/20">
+                <button onClick={() => {
+                  addToCart(product, quantity, "", selectedColor || product.colors[0] || "");
+                  toast({
+                    title: "Added to cart ✓",
+                    description: (
+                      <span className="flex items-center gap-2 text-xs">
+                        {product.title} — AED {product.price * quantity}
+                        <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hi! I'm interested in ${product.title} (AED ${product.price}). Is it available?`)}`}
+                          target="_blank" rel="noreferrer"
+                          className="flex items-center gap-1 text-green-600 font-medium hover:underline">
+                          <MessageCircle size={12} /> WhatsApp us
+                        </a>
+                      </span>
+                    ) as any,
+                  });
+                }} className="flex-1 py-4 bg-primary text-primary-foreground rounded-full font-body text-sm font-semibold hover:brightness-110 transition-all btn-press shadow-lg shadow-primary/20">
                   Add to Cart — AED {product.price * quantity}
                 </button>
                 <button className="p-4 rounded-full border border-border hover:border-berry hover:text-berry transition-all btn-press"><Heart size={20} /></button>

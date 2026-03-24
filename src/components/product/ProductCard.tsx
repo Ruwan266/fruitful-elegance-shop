@@ -30,7 +30,7 @@ const ProductCard = ({ product, index = 0 }: { product: Product; index?: number 
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative p-2">
-        <div className="aspect-square rounded-2xl overflow-hidden bg-muted">
+        <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-muted">
           <img
             src={product.image}
             alt={product.title}
