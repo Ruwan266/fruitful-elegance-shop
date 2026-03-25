@@ -32,9 +32,36 @@ const Shop = () => {
   const { data: shopifyProducts, isLoading, isError } = useShopifyProducts(48);
   const products = shopifyProducts?.length ? shopifyProducts : staticProducts;
 
+  // Smart category filter - checks category slug AND product tags AND title keywords
+  function matchesCategory(product: any, cat: string): boolean {
+    if (!cat) return true;
+    const fields = [
+      product.category,
+      ...(product.tags || []),
+      product.title,
+    ].join(" ").toLowerCase();
+
+    const keywords: Record<string, string[]> = {
+      "fruits":    ["fruit", "fruits", "fresh fruit"],
+      "nuts":      ["nut", "nuts", "almond", "cashew", "pistachio", "walnut"],
+      "berries":   ["berr", "berry", "strawberr", "blueberr", "raspberr"],
+      "dates":     ["date", "dates", "medjool", "ajwa", "sukkari"],
+      "gift-boxes":["gift box", "gift-box", "giftbox", "luxury", "hamper"],
+      "corporate": ["corporate", "bulk", "business"],
+      "snacks":    ["snack", "snacks", "healthy"],
+    };
+
+    // Exact category match first
+    if (product.category === cat) return true;
+
+    // Keyword match
+    const keys = keywords[cat] || [cat];
+    return keys.some(k => fields.includes(k));
+  }
+
   const filtered = useMemo(() => {
     let result = [...products];
-    if (selectedCategory) result = result.filter(p => p.category === selectedCategory);
+    if (selectedCategory) result = result.filter(p => matchesCategory(p, selectedCategory));
     if (selectedPrice !== null) {
       const range = priceRanges[selectedPrice];
       result = result.filter(p => p.price >= range.min && p.price < range.max);

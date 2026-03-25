@@ -53,9 +53,27 @@ function adaptProduct(node: any): Product {
     if (found) return found;
     return BADGE_MAP[tag.toLowerCase()] ?? undefined;
   }, undefined);
-  const category = node.productType
-    ? node.productType.toLowerCase().replace(/\s+/g, "-")
-    : node.tags[0]?.toLowerCase().replace(/\s+/g, "-") ?? "gift-boxes";
+  // Map Shopify productType / tags → our category slugs
+  const CATEGORY_MAP: Record<string, string> = {
+    "fruit gift box": "gift-boxes", "gift box": "gift-boxes", "gift-box": "gift-boxes",
+    "fruit gift-box": "gift-boxes", "luxury gift": "gift-boxes",
+    "fresh fruit": "fruits", "fruit": "fruits", "fruits": "fruits",
+    "nut": "nuts", "nuts": "nuts", "premium nut": "nuts",
+    "berr": "berries", "berry": "berries", "berries": "berries",
+    "date": "dates", "dates": "dates", "luxury date": "dates",
+    "corporate": "corporate", "snack": "snacks", "snacks": "snacks",
+  };
+
+  function detectCategory(type: string, tags: string[]): string {
+    const allText = [type, ...tags].join(" ").toLowerCase();
+    for (const [keyword, slug] of Object.entries(CATEGORY_MAP)) {
+      if (allText.includes(keyword)) return slug;
+    }
+    // fallback: slugify productType
+    return type ? type.toLowerCase().replace(/\s+/g, "-") : "gift-boxes";
+  }
+
+  const category = detectCategory(node.productType || "", node.tags);
   const sizeOpt = node.options.find((o: any) => o.name.toLowerCase() === "size");
   const colorOpt = node.options.find((o: any) =>
     o.name.toLowerCase() === "color" || o.name.toLowerCase() === "colour"
