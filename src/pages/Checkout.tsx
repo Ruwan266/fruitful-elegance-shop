@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ← ඔයාගේ WhatsApp number (country code, + නැතිව)
-const WHATSAPP_NUMBER = "971554879005";
+const WHATSAPP_NUMBER = "+971554879005";
 
 interface DeliveryOption {
   id: string; name: string; description: string;

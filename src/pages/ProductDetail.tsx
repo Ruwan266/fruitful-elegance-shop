@@ -21,7 +21,7 @@ const ProductDetail = () => {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const [selectedImage, setSelectedImage] = useState(0);
-  const WHATSAPP = "971554879005";
+  const WHATSAPP = "+971554879005";
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [openFaq, setOpenFaq] = useState<number | null>(null);

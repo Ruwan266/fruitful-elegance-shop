@@ -18,7 +18,7 @@ const Cart = () => {
   // Shopify items have variantId, custom boxes don't
   const shopifyItems = items.filter(i => i.product.variantId);
   const customItems  = items.filter(i => !i.product.variantId);
-  const WHATSAPP = "971503645103";
+  const WHATSAPP = "+971554879005";
 
   async function handleCheckout() {
     if (!items.length) return;
