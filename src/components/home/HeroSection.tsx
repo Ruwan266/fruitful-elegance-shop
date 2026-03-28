@@ -17,6 +17,48 @@ const HeroSection = () => {
 
   return (
     <section className="relative overflow-hidden bg-background">
+      {/* ── Warm Golden Bokeh Background ── */}
+      <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
+        {/* Base warm cream gradient */}
+        <div className="absolute inset-0"
+          style={{ background: "linear-gradient(135deg, #fdf6e3 0%, #faecd0 40%, #f5e0b5 70%, #eedfa8 100%)" }} />
+
+        {/* Large soft bokeh blobs */}
+        <div className="absolute rounded-full blur-[90px] opacity-60"
+          style={{ width: 520, height: 520, top: -80, left: -100,
+            background: "radial-gradient(circle, #f5c842 0%, #e8a020 60%, transparent 100%)" }} />
+        <div className="absolute rounded-full blur-[110px] opacity-50"
+          style={{ width: 600, height: 600, top: 100, right: -150,
+            background: "radial-gradient(circle, #f0d060 0%, #d4900a 60%, transparent 100%)" }} />
+        <div className="absolute rounded-full blur-[80px] opacity-40"
+          style={{ width: 380, height: 380, bottom: 50, left: "30%",
+            background: "radial-gradient(circle, #fce48a 0%, #e6b030 70%, transparent 100%)" }} />
+        <div className="absolute rounded-full blur-[70px] opacity-35"
+          style={{ width: 280, height: 280, top: "20%", left: "40%",
+            background: "radial-gradient(circle, #fff0a0 0%, #f0c040 70%, transparent 100%)" }} />
+
+        {/* Small sparkle bokeh dots */}
+        {[
+          { w: 120, h: 120, top: "10%",  left: "15%",  op: 0.5 },
+          { w: 90,  h: 90,  top: "60%",  left: "5%",   op: 0.4 },
+          { w: 160, h: 160, top: "30%",  left: "55%",  op: 0.3 },
+          { w: 100, h: 100, top: "75%",  left: "70%",  op: 0.45 },
+          { w: 70,  h: 70,  top: "5%",   left: "70%",  op: 0.35 },
+          { w: 130, h: 130, top: "50%",  left: "80%",  op: 0.3 },
+          { w: 80,  h: 80,  top: "85%",  left: "40%",  op: 0.4 },
+          { w: 110, h: 110, top: "15%",  left: "85%",  op: 0.25 },
+        ].map((b, i) => (
+          <div key={i} className="absolute rounded-full blur-[40px]"
+            style={{
+              width: b.w, height: b.h, top: b.top, left: b.left, opacity: b.op,
+              background: "radial-gradient(circle, #fde68a 0%, #f59e0b 60%, transparent 100%)"
+            }} />
+        ))}
+
+        {/* Subtle warm vignette overlay */}
+        <div className="absolute inset-0"
+          style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(180,120,20,0.12) 100%)" }} />
+      </div>
       <div className="container-premium">
         <div className="grid lg:grid-cols-2 gap-8 items-center min-h-[85vh] py-16 lg:py-0">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }} className="space-y-8 text-center lg:text-left">
