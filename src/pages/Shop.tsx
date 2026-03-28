@@ -133,7 +133,7 @@ const Shop = () => {
 
             <div className="flex-1">
               {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                   {[...Array(6)].map((_, i) => (
                     <div key={i} className="card-premium animate-pulse">
                       <div className="p-2"><div className="aspect-square rounded-2xl bg-muted" /></div>
@@ -151,7 +151,7 @@ const Shop = () => {
                   <button onClick={clearFilters} className="mt-4 font-body text-sm text-primary hover:underline">Clear all filters</button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                   {filtered.map((product, i) => <ProductCard key={product.id} product={product} index={i} />)}
                 </div>
               )}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import ProductCard from "@/components/product/ProductCard";
@@ -6,7 +6,7 @@ import { useShopifyProducts, useShopifyProduct } from "@/hooks/useShopifyProduct
 import { products as staticProducts } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Minus, Plus, Heart, Share2, Truck, Shield, Package, ChevronDown, ChevronUp, Loader2, MessageCircle } from "lucide-react";
+import { Star, Minus, Plus, Heart, Share2, Truck, Shield, Package, ChevronDown, ChevronUp, Loader2, MessageCircle, ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const ProductDetail = () => {
@@ -21,10 +21,23 @@ const ProductDetail = () => {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const [selectedImage, setSelectedImage] = useState(0);
-  const WHATSAPP = "971554879005"; // Your WhatsApp number in international format without the '+' sign
+  const WHATSAPP = "971554879005";
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  // Scroll to top when product page loads
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [handle]);
+
+  // Show sticky bottom bar after scrolling past hero image on mobile
+  useEffect(() => {
+    const onScroll = () => setShowStickyBar(window.scrollY > 300);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const faqs = [
     { q: "How long does delivery take?", a: "Same-day delivery available across Dubai. Abu Dhabi and Sharjah within 24 hours." },
@@ -226,6 +239,37 @@ const ProductDetail = () => {
           )}
         </div>
       </section>
+
+      {/* ── Mobile Sticky Bottom Bar ── */}
+      <div className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border px-4 py-3 transition-transform duration-300 ${showStickyBar ? "translate-y-0" : "translate-y-full"}`}>
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              addToCart(product!, quantity, "", selectedColor || (product?.colors[0] ?? ""));
+              toast({ title: "Added to cart ✓", description: `${product?.title} — AED ${(product?.price ?? 0) * quantity}` });
+            }}
+            className="flex-1 py-3 bg-primary text-primary-foreground rounded-full font-body text-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-all"
+          >
+            <ShoppingBag size={16} />
+            Add to Cart — AED {(product?.price ?? 0) * quantity}
+          </button>
+          <button
+            onClick={() => {
+              const variantGid = (product as any)?.variantId ?? "";
+              const numericVariantId = variantGid.includes("/") ? variantGid.split("/").pop() : variantGid;
+              const SHOPIFY_DOMAIN = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN ?? "fruitflix-uae.myshopify.com";
+              if (numericVariantId) {
+                window.location.href = `https://${SHOPIFY_DOMAIN}/cart/${numericVariantId}:${quantity}`;
+              } else {
+                window.location.href = `https://${SHOPIFY_DOMAIN}/products/${product?.handle}`;
+              }
+            }}
+            className="px-5 py-3 border-2 border-primary text-primary rounded-full font-body text-sm font-semibold active:scale-95 transition-all"
+          >
+            Buy Now
+          </button>
+        </div>
+      </div>
     </Layout>
   );
 };
