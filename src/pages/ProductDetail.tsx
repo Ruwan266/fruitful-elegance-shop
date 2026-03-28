@@ -160,7 +160,25 @@ const ProductDetail = () => {
                 <button className="p-4 rounded-full border border-border hover:border-berry hover:text-berry transition-all btn-press"><Heart size={20} /></button>
               </div>
 
-              <Link to="/checkout" className="block w-full py-4 border-2 border-primary text-primary rounded-full font-body text-sm font-semibold text-center hover:bg-primary hover:text-primary-foreground transition-all btn-press">Buy Now</Link>
+              <button
+                onClick={() => {
+                  // Get numeric variant ID from Shopify GID
+                  const variantGid = (product as any).variantId ?? "";
+                  const numericVariantId = variantGid.includes("/")
+                    ? variantGid.split("/").pop()
+                    : variantGid;
+                  const SHOPIFY_DOMAIN = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN ?? "fruitflix-uae.myshopify.com";
+                  if (numericVariantId) {
+                    window.location.href = `https://${SHOPIFY_DOMAIN}/cart/${numericVariantId}:${quantity}`;
+                  } else {
+                    // Fallback: open Shopify product page
+                    window.location.href = `https://${SHOPIFY_DOMAIN}/products/${product.handle}`;
+                  }
+                }}
+                className="block w-full py-4 border-2 border-primary text-primary rounded-full font-body text-sm font-semibold text-center hover:bg-primary hover:text-primary-foreground transition-all btn-press"
+              >
+                Buy Now
+              </button>
 
               <div className="grid grid-cols-3 gap-3">
                 {[{ icon: Truck, text: "Free UAE Delivery" }, { icon: Shield, text: "Freshness Guarantee" }, { icon: Package, text: "Gift-Ready" }].map(({ icon: Icon, text }, i) => (
