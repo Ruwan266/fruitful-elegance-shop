@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Tag } from "lucide-react";
-import heroImg from "@/assets/hero-giftbox.jpg";
+import heroImg from "@/assets/Home.jpeg";
 import { getOffers, type Offer } from "@/lib/sharedStore";
 
 const HeroSection = () => {
