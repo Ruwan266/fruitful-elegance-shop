@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Twitter, MapPin, Phone, Mail, Truck } from "lucide-react";
+import { Instagram, Facebook, MapPin, Mail, Truck } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -45,11 +45,12 @@ const Footer = () => {
               Handcrafted with love, delivered across the UAE.
             </p>
             <div className="flex gap-3">
-              {[Instagram, Facebook, Twitter].map((Icon, i) => (
-                <a key={i} href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold hover:text-foreground transition-all btn-press">
-                  <Icon size={18} />
-                </a>
-              ))}
+              <a href="https://www.instagram.com/fruitflixuae?igsh=MXhvcWpmZDd4ZzBpcg==" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold hover:text-foreground transition-all btn-press">
+                <Instagram size={18} />
+              </a>
+              <a href="https://www.facebook.com/share/17q6MSkB1a/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold hover:text-foreground transition-all btn-press">
+                <Facebook size={18} />
+              </a>
             </div>
           </div>
 
@@ -77,9 +78,13 @@ const Footer = () => {
           <div>
             <h4 className="font-display text-lg mb-4">Contact</h4>
             <ul className="space-y-3 font-body text-sm text-primary-foreground/70">
-              <li className="flex items-center gap-2"><MapPin size={16} className="text-gold flex-shrink-0" /> Dubai, Abu Dhabi & Sharjah, UAE</li>
-              <li className="flex items-center gap-2"><Phone size={16} className="text-gold flex-shrink-0" /> +971 50 123 4567</li>
-              <li className="flex items-center gap-2"><Mail size={16} className="text-gold flex-shrink-0" /> hello@fruitflix.ae</li>
+              <li className="flex items-center gap-2"><MapPin size={16} className="text-gold flex-shrink-0" /> Dubai, UAE</li>
+              <li className="flex items-center gap-2">
+                <Mail size={16} className="text-gold flex-shrink-0" />
+                <a href="mailto:Fruitflixuaeinfo@gmail.com" className="hover:text-gold transition-colors">
+                  Fruitflixuaeinfo@gmail.com
+                </a>
+              </li>
             </ul>
 
             {/* Newsletter */}
