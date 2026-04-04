@@ -47,6 +47,70 @@ export const categories = [
 ];
 
 export const products: Product[] = [
+  // ─── Luxury Fresh Fruits Gift Box – Small ───────────────────────
+  {
+    id: "9",
+    title: "Luxury Fresh Fruits Gift Box – Small",
+    price: 179,           // ← sale price
+    comparePrice: 199,    // ← original price (strikethrough)
+    image: giftboxImg,
+    images: [giftboxImg, fruitsImg],
+    category: "gift-boxes",
+    badge: "sale",
+    rating: 4.8,
+    reviewCount: 56,
+    description: "A beautifully curated small gift box filled with hand-picked premium fresh fruits, elegantly wrapped for gifting across the UAE.",
+    sizes: ["S"],
+    colors: ["Forest Green", "Gold", "Cream"],
+    inStock: true,
+    sku: "FF-GB-SM-001",
+    tags: ["gift", "fruits", "small", "sale"],
+    whatsInside: ["Seasonal Premium Fruits", "Gift Ribbon", "Handwritten Card"],
+  },
+
+  // ─── Luxury Fresh Fruits Gift Box – Medium ──────────────────────
+  {
+    id: "10",
+    title: "Luxury Fresh Fruits Gift Box – Medium",
+    price: 249,           // ← sale price
+    comparePrice: 299,    // ← original price (strikethrough)
+    image: giftboxImg,
+    images: [giftboxImg, fruitsImg, berriesImg],
+    category: "gift-boxes",
+    badge: "sale",
+    rating: 4.9,
+    reviewCount: 74,
+    description: "A generous medium gift box featuring a premium selection of exotic fruits, artfully arranged and wrapped in our signature style.",
+    sizes: ["M"],
+    colors: ["Forest Green", "Gold", "Cream"],
+    inStock: true,
+    sku: "FF-GB-MD-001",
+    tags: ["gift", "fruits", "medium", "sale"],
+    whatsInside: ["Hand-picked Exotic Fruits", "Seasonal Berries", "Premium Ribbon", "Gift Card"],
+  },
+
+  // ─── Luxury Fresh Fruits Gift Box – Large ───────────────────────
+  {
+    id: "11",
+    title: "Luxury Fresh Fruits Gift Box – Large",
+    price: 360,           // ← sale price
+    comparePrice: 450,    // ← original price (strikethrough)
+    image: giftboxImg,
+    images: [giftboxImg, fruitsImg, nutsImg, berriesImg],
+    category: "gift-boxes",
+    badge: "sale",
+    rating: 5.0,
+    reviewCount: 42,
+    description: "Our grandest gift box — overflowing with the finest seasonal fruits, luxury dates, and premium nuts. The ultimate gift for any occasion.",
+    sizes: ["L"],
+    colors: ["Forest Green", "Gold", "Cream"],
+    inStock: true,
+    sku: "FF-GB-LG-001",
+    tags: ["gift", "fruits", "large", "premium", "sale"],
+    whatsInside: ["Premium Exotic Fruits", "Medjool Dates", "Mixed Nuts", "Artisan Chocolates", "Gold Ribbon", "Gift Card"],
+  },
+
+  // ─── Existing products ───────────────────────────────────────────
   {
     id: "1", title: "Royal Fruit & Nut Gift Box", price: 299, comparePrice: 399,
     image: giftboxImg, images: [giftboxImg, fruitsImg, nutsImg],

@@ -4,6 +4,7 @@ import { Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { getPricing, formatAED } from "@/lib/pricing";
 
 const badgeStyles: Record<string, string> = {
   "best-seller": "bg-primary/90 text-primary-foreground",
@@ -17,6 +18,7 @@ const ProductCard = ({ product, index = 0 }: { product: Product; index?: number 
   const { addToCart } = useCart();
   const [isHovered, setIsHovered] = useState(false);
   const productLink = `/product/${product.handle || product.id}`;
+  const { currentPrice, originalPrice, hasDiscount, discountPercent } = getPricing(product);
 
   return (
     <motion.div
@@ -90,19 +92,46 @@ const ProductCard = ({ product, index = 0 }: { product: Product; index?: number 
           <span className="font-body text-[10px] sm:text-xs text-muted-foreground">({product.reviewCount})</span>
         </div>
 
-        <div className="flex items-center justify-between mt-2 sm:mt-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-body text-sm sm:text-base font-semibold">AED {product.price}</span>
-            {product.comparePrice && (
-              <span className="font-body text-xs text-muted-foreground line-through">AED {product.comparePrice}</span>
-            )}
-          </div>
-          {product.comparePrice && (
-            <span className="badge-pill bg-berry/10 text-berry text-[9px] sm:text-[10px]">
-              {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
+        {/* ── UPDATED PRICE SECTION ─────────────────────────────── */}
+        <div className="mt-2 sm:mt-2.5">
+          {hasDiscount && originalPrice ? (
+            <>
+              {/* Discount badge + original price row */}
+              <div className="flex items-center gap-2 mb-0.5">
+                <span
+                  className="font-body text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded-md"
+                  style={{
+                    background: "linear-gradient(135deg, #c6a74d22, #e8c96a33)",
+                    color: "#b8952a",
+                    border: "1px solid #c6a74d44",
+                  }}
+                >
+                  {discountPercent}% OFF
+                </span>
+                <span
+                  className="font-body text-[11px] sm:text-xs text-muted-foreground"
+                  style={{ textDecoration: "line-through", textDecorationColor: "#c6a74d", textDecorationThickness: "1.5px" }}
+                >
+                  {formatAED(originalPrice)}
+                </span>
+              </div>
+
+              {/* Sale price — dominant */}
+              <span
+                className="font-body text-base sm:text-lg font-bold"
+                style={{ color: "hsl(var(--primary))", letterSpacing: "-0.02em" }}
+              >
+                {formatAED(currentPrice)}
+              </span>
+            </>
+          ) : (
+            /* Normal price — no discount */
+            <span className="font-body text-sm sm:text-base font-semibold text-foreground">
+              {formatAED(currentPrice)}
             </span>
           )}
         </div>
+        {/* ── END PRICE SECTION ────────────────────────────────── */}
 
         {/* Mobile Add to Cart button — always visible */}
         <button

@@ -1,6 +1,24 @@
 import { shopifyFetch } from "./shopify";
 import { Product } from "@/data/products";
 
+// ── Price overrides — text part of handle (emoji ignored) ─────────
+const PRICE_OVERRIDES: Array<{
+  match: string;
+  price: number;
+  comparePrice: number;
+}> = [
+  { match: "luxury-fresh-fruit-gift-box-small",   price: 179, comparePrice: 199 },
+  { match: "elegant-fresh-fruit-gift-box-medium", price: 249, comparePrice: 299 },
+  { match: "premium-fresh-fruit-gift-box-large",  price: 360, comparePrice: 450 },
+];
+
+/** Strip emoji & trailing dashes, then check if handle starts with key */
+function findOverride(handle: string) {
+  // Remove all non-ASCII characters (emoji) and trailing dashes
+  const clean = handle.replace(/[^\x00-\x7F]/g, "").replace(/-+$/, "");
+  return PRICE_OVERRIDES.find(o => clean.startsWith(o.match));
+}
+
 const PRODUCTS_QUERY = `
   query GetProducts($first: Int!) {
     products(first: $first) {
@@ -13,9 +31,12 @@ const PRODUCTS_QUERY = `
             minVariantPrice { amount currencyCode }
             maxVariantPrice { amount currencyCode }
           }
+          compareAtPriceRange {
+            maxVariantPrice { amount currencyCode }
+          }
           options { name values }
           variants(first: 1) {
-            edges { node { id sku availableForSale } }
+            edges { node { id sku availableForSale compareAtPrice { amount } } }
           }
         }
       }
@@ -33,9 +54,12 @@ const PRODUCT_BY_HANDLE_QUERY = `
         minVariantPrice { amount currencyCode }
         maxVariantPrice { amount currencyCode }
       }
+      compareAtPriceRange {
+        maxVariantPrice { amount currencyCode }
+      }
       options { name values }
       variants(first: 20) {
-        edges { node { id sku availableForSale selectedOptions { name value } } }
+        edges { node { id sku availableForSale compareAtPrice { amount } selectedOptions { name value } } }
       }
     }
   }
@@ -48,12 +72,30 @@ const BADGE_MAP: Record<string, Product["badge"]> = {
 
 function adaptProduct(node: any): Product {
   const minPrice = parseFloat(node.priceRange.minVariantPrice.amount);
-  const maxPrice = parseFloat(node.priceRange.maxVariantPrice.amount);
-  const badge = node.tags.reduce((found: any, tag: string) => {
-    if (found) return found;
-    return BADGE_MAP[tag.toLowerCase()] ?? undefined;
-  }, undefined);
-  // Map Shopify productType / tags → our category slugs
+
+  // Shopify compareAtPrice
+  const compareAtRaw =
+    node.compareAtPriceRange?.maxVariantPrice?.amount ??
+    node.variants?.edges?.[0]?.node?.compareAtPrice?.amount;
+  const compareAtPrice = compareAtRaw ? parseFloat(compareAtRaw) : undefined;
+  const shopifyCompare =
+    compareAtPrice && compareAtPrice > minPrice
+      ? Math.round(compareAtPrice)
+      : undefined;
+
+  // Manual override (emoji-safe matching)
+  const override = findOverride(node.handle ?? "");
+  const finalPrice        = override?.price        ?? Math.round(minPrice);
+  const finalComparePrice = override?.comparePrice ?? shopifyCompare;
+
+  // Auto badge "sale" if discount exists
+  const badge = finalComparePrice
+    ? "sale"
+    : node.tags.reduce((found: any, tag: string) => {
+        if (found) return found;
+        return BADGE_MAP[tag.toLowerCase()] ?? undefined;
+      }, undefined);
+
   const CATEGORY_MAP: Record<string, string> = {
     "fruit gift box": "gift-boxes", "gift box": "gift-boxes", "gift-box": "gift-boxes",
     "fruit gift-box": "gift-boxes", "luxury gift": "gift-boxes",
@@ -69,41 +111,40 @@ function adaptProduct(node: any): Product {
     for (const [keyword, slug] of Object.entries(CATEGORY_MAP)) {
       if (allText.includes(keyword)) return slug;
     }
-    // fallback: slugify productType
     return type ? type.toLowerCase().replace(/\s+/g, "-") : "gift-boxes";
   }
 
-  const category = detectCategory(node.productType || "", node.tags);
-  const sizeOpt = node.options.find((o: any) => o.name.toLowerCase() === "size");
-  const colorOpt = node.options.find((o: any) =>
+  const category  = detectCategory(node.productType || "", node.tags);
+  const sizeOpt   = node.options.find((o: any) => o.name.toLowerCase() === "size");
+  const colorOpt  = node.options.find((o: any) =>
     o.name.toLowerCase() === "color" || o.name.toLowerCase() === "colour"
   );
   const allImages: string[] = node.images.edges.map((e: any) => e.node.url);
   const primaryImage = node.featuredImage?.url ?? allImages[0] ?? "";
   const firstVariant = node.variants.edges[0]?.node;
-  const numericId = node.id.split("/").pop() ?? node.id;
+  const numericId    = node.id.split("/").pop() ?? node.id;
 
   return {
-    id: numericId,
-    shopifyId: node.id,
-    variantId: firstVariant?.id ?? "",
-    handle: node.handle,
-    title: node.title,
-    price: Math.round(minPrice),
-    comparePrice: maxPrice > minPrice ? Math.round(maxPrice) : undefined,
-    image: primaryImage,
-    images: allImages.length ? allImages : [primaryImage],
+    id:           numericId,
+    shopifyId:    node.id,
+    variantId:    firstVariant?.id ?? "",
+    handle:       node.handle,
+    title:        node.title,
+    price:        finalPrice,
+    comparePrice: finalComparePrice,
+    image:        primaryImage,
+    images:       allImages.length ? allImages : [primaryImage],
     category,
     badge,
-    rating: 4.8,
-    reviewCount: 0,
-    description: node.description,
-    sizes: sizeOpt?.values ?? ["S", "M", "L"],
-    colors: colorOpt?.values ?? ["Forest Green", "Gold"],
-    inStock: node.availableForSale,
-    sku: firstVariant?.sku ?? "",
-    tags: node.tags,
-    whatsInside: undefined,
+    rating:       4.8,
+    reviewCount:  0,
+    description:  node.description,
+    sizes:        sizeOpt?.values  ?? ["S", "M", "L"],
+    colors:       colorOpt?.values ?? ["Forest Green", "Gold"],
+    inStock:      node.availableForSale,
+    sku:          firstVariant?.sku ?? "",
+    tags:         node.tags,
+    whatsInside:  undefined,
   } as Product;
 }
 
